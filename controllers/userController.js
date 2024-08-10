@@ -1,14 +1,16 @@
 // controllers/userController.js
 const UserModel = require('../models/userModel');
+const jwt = require('jsonwebtoken');
 
 // Controller function to handle creating a new user
 const createUser = async (req, res) => {
-    const { username, email, password } = req.body;
     try {
+        const { username, email, password } = req.body;
         const user = await UserModel.createUser(username, email, password);
-        res.status(201).json(user);
+        const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' });
+        res.status(201).json({ token });
     } catch (error) {
-        res.status(500).json({ error: 'Error creating user' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -30,7 +32,7 @@ const getUserById = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.status(200).json(user);
+        res.json(user);
     } catch (error) {
         res.status(500).json({ error: 'Error retrieving user' });
     }

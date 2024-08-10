@@ -1,5 +1,6 @@
 // models/userModel.js
 const pool = require('../config/db');
+const bcrypt = require('bcrypt');
 
 // Function to create the `users` table if it doesn't exist
 const createTable = async () => {
@@ -15,15 +16,18 @@ const createTable = async () => {
 };
 
 // Function to insert a new user into the `users` table
-const createUser = async (username, email, password) => {
-    const query = `
-        INSERT INTO users (username, email, password)
-        VALUES ($1, $2, $3)
-        RETURNING *;
-    `;
-    const result = await pool.query(query, [username, email, password]);
-    return result.rows[0];
-};
+async function createUser(username, email, password) {
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await pool.query(
+        'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
+        [username, email, hashedPassword]
+      );
+      return newUser.rows[0];
+    } catch (error) {
+      throw new Error('Database error: ' + error.message);
+    }
+  }
 
 // Function to retrieve all users from the `users` table
 const getAllUsers = async () => {
